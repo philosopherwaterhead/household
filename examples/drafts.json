@@ -1,0 +1,33 @@
+{
+  "drafts": [
+    {
+      "id": "example-notice-001",
+      "sourceKey": "transaction:example-notice-001",
+      "type": "transaction",
+      "payload": {
+        "kind": "expense",
+        "date": "2026-10-03",
+        "accountId": "card-10",
+        "currency": "JPY",
+        "amountYen": 1200,
+        "merchant": "架空のサンプル店舗",
+        "category": "食費",
+        "note": "動作確認用です。実際の利用通知ではありません。"
+      },
+      "source": { "provider": "example", "messageId": "example-notice-001" }
+    },
+    {
+      "id": "example-balance-001",
+      "sourceKey": "balance_observation:example-balance-001",
+      "type": "balance_observation",
+      "payload": {
+        "accountId": "bank-main",
+        "observedAt": "2026-10-10T19:00:00+09:00",
+        "balanceYen": 95000,
+        "withdrawalConfirmed": null,
+        "note": "架空の残高です。画像から読み取ったものではありません。"
+      },
+      "source": { "provider": "example", "messageId": "example-balance-001" }
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#244d47"><title>手元の家計簿</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https: http://localhost:8787 http://127.0.0.1:8787; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg"><link rel="stylesheet" href="./style.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+<header><a class="brand" href="#overview"><span class="brand-icon">帳</span><span>手元の家計簿<small>記録を確かめて、暮らしを見渡す</small></span></a><span id="connection" class="chip">読み込み中</span></header>
+<main>
+  <div class="intro"><div><p class="eyebrow">YOUR PERSONAL LEDGER</p><h1>お金の流れを、手元に。</h1><p>記録の確認から残高の照合まで。保存済みの家計簿はオフラインでも使えます。</p></div><button id="sync-button" class="primary">同期する</button></div>
+  <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+  <nav aria-label="家計簿の表示"><button data-view="overview" aria-selected="true">今月の家計</button><button data-view="entries">記録・承認 <span id="pending-count"></span></button><button data-view="balances">残高の照合</button><button data-view="settings">設定・バックアップ</button></nav>
+  <section id="overview" class="view">
+    <div class="section-heading"><h2>今月の家計</h2><label>表示月 <input id="month" type="month"></label></div>
+    <div class="metrics"><article><p>確定した支出（返金差引）</p><strong id="expense">—</strong><small id="estimated-expense"></small></article><article><p>確定した収入</p><strong id="income">—</strong><small>口座間の振替は含みません</small></article><article><p>確認待ち</p><strong id="pending-total">—</strong><small>承認した内容が確定額に反映されます</small></article></div>
+    <div class="columns"><article class="panel"><h3>口座と財布</h3><div id="account-cards"></div><p class="hint">クレジットカードのマイナス残高は未払い分です。最初に基準残高を設定してください。</p></article><article class="panel"><h3>支出の内訳</h3><div id="categories"></div></article></div>
+    <article class="panel"><h3>残高の確認</h3><p>カードの引落日は毎月10日・26日。引落処理後の銀行口座スクショを、件名「家計簿 残高照合」で自分宛てに送ってください。</p><p id="cash-reminder" class="hint"></p><p class="hint">引落の実際の反映日は、銀行の入出金明細で確認してください。</p></article>
+    <button id="analysis-export">ChatGPTで分析するデータを保存</button>
+  </section>
+  <section id="entries" class="view" hidden>
+    <div class="section-heading"><h2>記録と承認</h2><button id="new-entry" class="primary">記録を追加</button></div>
+    <p class="hint">ChatGPTが入力した内容は確認待ちで保存されます。修正案を承認するまでは、元の確定記録が集計に使われます。</p>
+    <label>表示 <select id="entry-filter"><option value="all">すべて</option><option value="pending">確認待ち</option><option value="approved">承認済み</option><option value="rejected">却下済み</option></select></label>
+    <div id="entry-list" class="record-list"></div>
+    <article class="panel"><h3>ChatGPTからの入力データ</h3><p class="hint">同期先をまだ設定していない場合は、入力候補のJSONファイルを取り込めます。</p><label class="file-label">入力候補を取り込む <input id="draft-import" type="file" accept=".json,application/json"></label></article>
+  </section>
+  <section id="balances" class="view" hidden>
+    <div class="section-heading"><h2>実残高との照合</h2></div>
+    <article class="panel"><h3>スクショ・申告の残高を入力</h3><form id="observation-form" class="form-grid">
+      <label>対象口座 <select id="observation-account" required></select></label><label>確認日時 <input id="observation-time" type="datetime-local" required></label><label>実残高（円） <input id="observation-amount" type="number" step="1" required></label><label>メモ・元画像の情報 <input id="observation-note" maxlength="1000"></label>
+      <label class="check"><input id="withdrawal-confirmed" type="checkbox">銀行の明細で引落反映を確認した</label><button class="primary" type="submit">残高を仮登録する</button>
+    </form></article>
+    <p class="hint">照合は日付単位です。撮影前後の同日の入出金や、未承認の記録がある場合は明細を確認してください。残高差額だけでは支出の用途を確定できません。</p>
+    <div id="observation-list" class="record-list"></div>
+  </section>
+  <section id="settings" class="view" hidden>
+    <h2>設定とバックアップ</h2>
+    <article class="panel"><h3>口座・基準残高</h3><p class="hint">基準日の開始時点の残高を入力します。カードの未払い残高はマイナスで入力してください。</p><div id="account-settings"></div><button id="add-account">口座を追加</button></article>
+    <article class="panel"><h3>ChatGPTとの同期</h3><form id="sync-form" class="form-grid"><label>同期先URL <input id="relay-url" type="url" placeholder="https://your-relay.example.com"></label><label>ビューワ用の接続キー <input id="viewer-token" type="password" autocomplete="off"></label><button class="primary">接続設定を保存</button></form><p class="hint">入力待ちの記録は起動時・オンライン復帰時に取得します。接続キーはこの端末に保存され、バックアップには含めません。</p><p id="sync-status" class="hint"></p></article>
+    <article class="panel"><h3>暗号化バックアップ</h3><form id="key-form" class="form-grid"><label>復元用パスフレーズ <input id="backup-password" type="password" minlength="12" autocomplete="new-password" required></label><button class="primary">暗号化を設定</button></form><p class="hint">12文字以上。別の端末で復元するときに必要です。暗号化を設定すると、同期時にバックアップを送ります。メールには最後に同期した版を添付する設計です。</p><div class="actions"><button id="backup-download">暗号化バックアップを保存</button><button id="plain-export">家計簿JSONを保存</button></div></article>
+    <article class="panel"><h3>バックアップから復元</h3><p class="hint">今の家計簿を置き換えます。復元する前に、現在の家計簿を保存してください。</p><label class="file-label">復元するファイル <input id="restore-file" type="file" accept=".json,application/json"></label><label>復元用パスフレーズ <input id="restore-password" type="password" autocomplete="off"></label><button id="restore-button">内容を確認して復元</button></article>
+    <article class="panel"><h3>端末への保存</h3><p id="storage-status" class="hint"></p><button id="persist-storage">端末への保存を保護する</button></article>
+  </section>
+</main>
+<footer>手元の家計簿 <span>金額はプログラムで集計します。</span></footer>
+<dialog id="entry-dialog"><form id="entry-form"><div class="section-heading"><h2 id="entry-title">記録を追加</h2><button type="button" id="close-entry" aria-label="閉じる">×</button></div><input id="entry-id" type="hidden"><div class="form-grid"><label>日付 <input id="entry-date" type="date" required></label><label>種類 <select id="entry-kind"><option value="expense">支出</option><option value="income">収入</option><option value="refund">返金</option><option value="transfer">振替・カード引落</option><option value="adjustment">残高調整</option></select></label><label>対象口座 <select id="entry-account" required></select></label><label id="to-account-label" hidden>振替先 <select id="entry-to-account"></select></label><label id="amount-label">金額（円） <input id="entry-amount" type="number" step="1" required></label><label>店舗・内容 <input id="entry-merchant" maxlength="160"></label><label>費目 <input id="entry-category" list="category-options" maxlength="80"></label><label>メモ <textarea id="entry-note" maxlength="1000"></textarea></label></div><datalist id="category-options"><option value="食費"><option value="日用品"><option value="交通"><option value="住居"><option value="医療"><option value="通信"><option value="娯楽"><option value="その他"></datalist><p id="entry-error" class="error" role="alert"></p><button class="primary">確認待ちで保存する</button></form></dialog>
+</body></html>

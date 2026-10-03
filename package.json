@@ -1,0 +1,11 @@
+{
+  "name": "local-ledger",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "engines": { "node": ">=24" }
+}

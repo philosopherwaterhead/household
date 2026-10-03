@@ -1,0 +1,16 @@
+name = "local-ledger-relay"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+
+[vars]
+PUBLIC_BASE_URL = "https://REPLACE_WITH_YOUR_WORKER.workers.dev"
+VIEWER_ORIGIN = "https://REPLACE_WITH_YOUR_GITHUB_USERNAME.github.io"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "local-ledger"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+migrations_dir = "migrations"
+
+[triggers]
+crons = ["17 18 * * *"]
